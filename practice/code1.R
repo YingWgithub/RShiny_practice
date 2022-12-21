@@ -136,7 +136,6 @@ ui <- fluidPage(
 )
 server <- function(input, output, session) { 
   #timer <- reactiveTimer(50) # update twice a second
-  
   x1 <-  eventReactive(input$simulate, { # eventReactive makes the simulation saperate to other parameters change
     #timer()
     input$simulate
@@ -145,11 +144,9 @@ server <- function(input, output, session) {
     #timer()
     input$simulate
     rnorm(input$n2, input$mean2, input$sd2)})
-  
   output$hist <- renderPlot({
     freqpoly(x1(), x2(), binwidth = input$binwidth, xlim = input$range)
   }, res = 96) # res: Resolution of resulting plot
-  
   output$ttest <- renderText({
     t_test(x1(), x2())
   })
