@@ -33,7 +33,6 @@ server <- function(input, output, session) {
   })
 }
 shinyApp(ui, server)
-
 # to improve the efficiency and reduce unwanted updates
 server2 <- function(input, output, session) {
   # Create a reactive expression
@@ -61,7 +60,6 @@ ui <- fluidPage(
   "and, (x * y) + 5 is", textOutput("product_plus5"),
   "and, (x * y) + 10 is", textOutput("product_plus10") 
 )
-
 server <- function(input, output, session) {
   product <- reactive({
     input$x * input$y # no need to add "product <-"
@@ -90,28 +88,70 @@ ui <- fluidPage(
   tableOutput("head"),
   verbatimTextOutput("structure")
 )
-
 server <- function(input, output, session) {
   dataset <- reactive({
     get(input$dataset, "package:nlme")
   })
-  
   # Display the dimensions of the selected dataset
   output$dimension <- renderPrint({
     dim(dataset())
   })
-  
   # Display the first few rows of the selected dataset
   output$head <- renderTable({
     head(dataset())
   })
-  
   # Display the structure of the selected dataset
   output$structure <- renderPrint({
     str(dataset())
   })
 }
+shinyApp(ui, server) # decide to use RatPupWeight dataset for main practice
 
+# example 5: eventReactive
+ui <- fluidPage(
+  fluidRow(
+    column(4, 
+           "Distribution 1",
+           numericInput("n1", label = "n", value = 1000, min = 1),
+           numericInput("mean1", label = "µ", value = 0, step = 0.1),
+           numericInput("sd1", label = "σ", value = 0.5, min = 0.1, step = 0.1),
+           actionButton("simulate", "Simulate!") # only need one
+    ),
+    column(4, 
+           "Distribution 2",
+           numericInput("n2", label = "n", value = 1000, min = 1),
+           numericInput("mean2", label = "µ", value = 0, step = 0.1),
+           numericInput("sd2", label = "σ", value = 0.5, min = 0.1, step = 0.1),
+    ),
+    column(4,
+           "Frequency polygon",
+           numericInput("binwidth", label = "Bin width", value = 0.1, step = 0.1),
+           sliderInput("range", label = "range", value = c(-3, 3), min = -5, max = 5)
+    )
+  ),
+  fluidRow(
+    column(9, plotOutput("hist")),
+    column(3, verbatimTextOutput("ttest"))
+  )
+)
+server <- function(input, output, session) { 
+  #timer <- reactiveTimer(50) # update twice a second
+  
+  x1 <-  eventReactive(input$simulate, { # eventReactive makes the simulation saperate to other parameters change
+    #timer()
+    input$simulate
+    rnorm(input$n1, input$mean1, input$sd1)})
+  x2 <-  eventReactive(input$simulate, {
+    #timer()
+    input$simulate
+    rnorm(input$n2, input$mean2, input$sd2)})
+  
+  output$hist <- renderPlot({
+    freqpoly(x1(), x2(), binwidth = input$binwidth, xlim = input$range)
+  }, res = 96) # res: Resolution of resulting plot
+  
+  output$ttest <- renderText({
+    t_test(x1(), x2())
+  })
+}
 shinyApp(ui, server)
-
-
